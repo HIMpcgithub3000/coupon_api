@@ -7,13 +7,15 @@ import { MongoCouponRepository } from './repositories/MongoCouponRepository';
 import { InMemoryCouponRepository } from './repositories/InMemoryCouponRepository';
 import { ICouponRepository } from './repositories/ICouponRepository';
 
+import { ResilientCouponRepository } from './repositories/ResilientCouponRepository';
+
 const PORT = parseInt(process.env.PORT || '5001', 10);
 
 async function bootstrap() {
   console.log('🚀 Starting Coupon API Server...');
 
   let repository: ICouponRepository;
-  let storageType: 'mongodb' | 'memory' = 'memory';
+  let storageType: 'mongodb' | 'memory' | 'resilient' = 'memory';
 
   if (process.env.STORAGE_TYPE === 'memory') {
     console.log('📦 Explicitly using In-Memory Coupon Repository (STORAGE_TYPE=memory)');
@@ -21,13 +23,19 @@ async function bootstrap() {
     storageType = 'memory';
   } else {
     const dbResult = await connectDatabase();
+    const resilientRepo = new ResilientCouponRepository({
+      mongoUri: process.env.MONGODB_URI,
+      initialOnline: dbResult.connected,
+      reconnectIntervalMs: 5000,
+    });
+
     if (dbResult.connected) {
-      repository = new MongoCouponRepository();
-      storageType = 'mongodb';
-    } else {
-      repository = new InMemoryCouponRepository();
-      storageType = 'memory';
+      await resilientRepo.warmCache();
     }
+
+    repository = resilientRepo;
+    storageType = 'resilient';
+    console.log('🛡️ Active Storage: Resilient Hybrid (MongoDB + In-Memory Failover & Auto-Sync)');
   }
 
   // Pre-seed a sample coupon for testing convenience if in-memory or empty
@@ -76,6 +84,7 @@ async function bootstrap() {
 
   const shutdown = async () => {
     console.log('\n🛑 Gracefully shutting down...');
+    repository.stopReconnectionPoll?.();
     server.close(async () => {
       await disconnectDatabase();
       console.log('HTTP server closed.');

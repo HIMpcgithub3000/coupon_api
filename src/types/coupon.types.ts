@@ -6,6 +6,8 @@ export interface ICoupon {
   createdAt: Date;
   updatedAt: Date;
   isExpired?: boolean;
+  pendingSync?: boolean;
+  storageSource?: 'mongodb' | 'memory';
 }
 
 export interface CreateCouponDTO {

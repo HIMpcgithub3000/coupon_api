@@ -6,9 +6,18 @@ export interface CreateCouponRepositoryInput {
   expiryDate: Date;
 }
 
+export interface StorageStatus {
+  isOnline: boolean;
+  pendingSyncCount: number;
+  activeStorage: 'mongodb' | 'memory' | 'resilient';
+}
+
 export interface ICouponRepository {
   findAll(): Promise<ICoupon[]>;
   findByCode(code: string): Promise<ICoupon | null>;
   create(data: CreateCouponRepositoryInput): Promise<ICoupon>;
-  clear?(): Promise<void>; // For testing cleanups
+  clear?(): Promise<void>;
+  getStatus?(): StorageStatus;
+  syncPendingToMongo?(): Promise<number>;
+  stopReconnectionPoll?(): void;
 }

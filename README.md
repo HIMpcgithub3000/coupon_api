@@ -9,18 +9,21 @@ A production-ready REST API built with **TypeScript**, **Node.js**, **Express**,
 ## 📋 Features & Architecture
 
 - **TypeScript Strict Mode**: Fully typed data models, repositories, controllers, and DTOs.
-- **Dual-Storage Architecture (Repository Pattern)**:
-  - Automatically connects to **MongoDB** (via Mongoose) when `MONGODB_URI` is provided.
-  - Gracefully falls back to an **In-Memory Repository** if MongoDB is omitted or unavailable—meaning reviewers can run and test the API immediately with zero external dependencies.
+- **Resilient Hybrid Storage (Automatic Failover & Offline Auto-Sync)**:
+  - **Zero Downtime Failover**: If MongoDB disconnects or experiences an outage at runtime, all operations automatically fail over to In-Memory storage without downtime.
+  - **Offline Queueing**: Coupons created during an outage are stored in-memory and marked `pendingSync: true`.
+  - **Background Health Polling**: Continuously monitors Mongoose connection events (`connected`, `disconnected`, `reconnected`) and attempts background reconnection.
+  - **Automatic Database Synchronization**: The instant MongoDB reconnects, all coupons created during downtime are automatically synced and persisted into MongoDB.
 - **Strict Input Validation & Sanitization**:
   - Validates discount percentage strictly from **1 to 90** (rejects `< 1`, `> 90`, or non-numbers).
   - Enforces future expiration dates.
   - Normalizes coupon codes (auto-uppercased, whitespace-trimmed, alphanumeric/hyphen/underscore).
   - Comprehensive check on order amounts (rejecting missing, negative, NaN, and non-numeric values).
+  - Defends against NoSQL query selector injection.
 - **Accurate Financial Calculations**:
   - Rounds discounts and final amounts to 2 decimal places (`cents`), preventing floating-point precision inaccuracies (e.g. `0.30000000000000004`).
-- **Automated Test Suite**:
-  - 33 comprehensive unit and integration tests using **Jest** and **Supertest** covering 100% of the specified edge cases.
+- **Comprehensive Automated Test Suite**:
+  - **48 automated unit and integration tests** using **Jest** and **Supertest** (including tests validating failover/auto-sync and all Part 2 edge cases).
 - **Bonus Simple React UI**:
   - Clean, unbloated, structured React page (black text on white background) to create coupons and list them in real-time.
 

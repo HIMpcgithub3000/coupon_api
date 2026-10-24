@@ -35,6 +35,14 @@ export class MongoCouponRepository implements ICouponRepository {
     return this.toEntity(doc);
   }
 
+  getStatus() {
+    return {
+      isOnline: CouponModel.db.readyState === 1,
+      pendingSyncCount: 0,
+      activeStorage: 'mongodb' as const,
+    };
+  }
+
   async clear(): Promise<void> {
     await CouponModel.deleteMany({});
   }

@@ -33,6 +33,18 @@ export class InMemoryCouponRepository implements ICouponRepository {
     return { ...newCoupon };
   }
 
+  upsert(coupon: ICoupon): void {
+    this.coupons.set(coupon.code.trim().toUpperCase(), { ...coupon });
+  }
+
+  getStatus() {
+    return {
+      isOnline: true,
+      pendingSyncCount: 0,
+      activeStorage: 'memory' as const,
+    };
+  }
+
   async clear(): Promise<void> {
     this.coupons.clear();
     this.idCounter = 1;

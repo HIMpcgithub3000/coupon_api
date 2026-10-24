@@ -9,7 +9,7 @@ import { errorHandler } from './middlewares/errorHandler';
 
 export interface AppOptions {
   repository?: ICouponRepository;
-  storageType?: 'mongodb' | 'memory';
+  storageType?: 'mongodb' | 'memory' | 'resilient';
 }
 
 export const createApp = (options?: AppOptions): Application => {
@@ -29,7 +29,7 @@ export const createApp = (options?: AppOptions): Application => {
   app.use(express.urlencoded({ extended: true }));
 
   // Repository & Service Initialization
-  const repository = options?.repository || new InMemoryCouponRepository();
+  const repository: ICouponRepository = options?.repository || new InMemoryCouponRepository();
   const couponService = new CouponService(repository);
   const couponController = new CouponController(couponService);
   const couponRouter = createCouponRouter(couponController);
@@ -51,9 +51,11 @@ export const createApp = (options?: AppOptions): Application => {
   });
 
   app.get('/health', (_req: Request, res: Response) => {
+    const repoStatus = repository.getStatus ? repository.getStatus() : undefined;
     res.status(200).json({
       status: 'UP',
       uptime: process.uptime(),
+      storage: repoStatus || { activeStorage: options?.storageType || 'memory' },
       timestamp: new Date().toISOString(),
     });
   });
