@@ -1,7 +1,5 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
 import { ICouponRepository } from './repositories/ICouponRepository';
 import { InMemoryCouponRepository } from './repositories/InMemoryCouponRepository';
 import { CouponService } from './services/coupon.service';
@@ -17,15 +15,10 @@ export interface AppOptions {
 export const createApp = (options?: AppOptions): Application => {
   const app: Application = express();
 
-  // Security & Utility Middlewares
-  app.use(
-    helmet({
-      contentSecurityPolicy: false, // allow flexible development testing
-    })
-  );
+  // CORS middleware
   app.use(
     cors({
-      origin: '*', // Allow requests from any frontend client during testing
+      origin: '*',
       methods: ['GET', 'POST', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     })
@@ -34,11 +27,6 @@ export const createApp = (options?: AppOptions): Application => {
   // Body Parsers
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
-  // Request logger (disabled during test runs)
-  if (process.env.NODE_ENV !== 'test') {
-    app.use(morgan('dev'));
-  }
 
   // Repository & Service Initialization
   const repository = options?.repository || new InMemoryCouponRepository();
