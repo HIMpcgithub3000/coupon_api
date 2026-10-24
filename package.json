@@ -9,7 +9,9 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --runInBand --detectOpenHandles --forceExit"
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles --forceExit",
+    "client": "npm run dev --prefix client",
+    "client:build": "npm run build --prefix client"
   },
   "keywords": ["coupon", "api", "express", "typescript", "mongodb"],
   "author": "",
