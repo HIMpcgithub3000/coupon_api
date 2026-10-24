@@ -2,27 +2,27 @@
 
 A production-ready REST API built with **TypeScript**, **Node.js**, **Express**, and **MongoDB** (with automatic zero-config In-Memory fallback) for creating discount coupons and applying them to orders.
 
+> 📝 **Part 2 Answers**: For the detailed bug analysis and fixes for the Express route in Part 2, see [ANSWERS.md](./ANSWERS.md).
+
 ---
 
-## 📋 Features & Design Highlights
+## 📋 Features & Architecture
 
-- **TypeScript Strict Mode**: Fully typed data models, repositories, and DTOs.
-- **Robust Storage Architecture (Repository Pattern)**:
-  - Connects to **MongoDB** (via Mongoose) when `MONGODB_URI` is provided.
-  - Automatically falls back to an **In-Memory Repository** if MongoDB is unavailable or omitted—meaning the API is 100% testable immediately after `git clone` without requiring a local database setup.
-- **Comprehensive Input Validation & Sanitization**:
-  - Validates discount percentage strictly from **1 to 90**.
-  - Enforces valid future expiry dates.
+- **TypeScript Strict Mode**: Fully typed data models, repositories, controllers, and DTOs.
+- **Dual-Storage Architecture (Repository Pattern)**:
+  - Automatically connects to **MongoDB** (via Mongoose) when `MONGODB_URI` is provided.
+  - Gracefully falls back to an **In-Memory Repository** if MongoDB is omitted or unavailable—meaning reviewers can run and test the API immediately with zero external dependencies.
+- **Strict Input Validation & Sanitization**:
+  - Validates discount percentage strictly from **1 to 90** (rejects `< 1`, `> 90`, or non-numbers).
+  - Enforces future expiration dates.
   - Normalizes coupon codes (auto-uppercased, whitespace-trimmed, alphanumeric/hyphen/underscore).
-  - Handles order amounts cleanly (safely rejecting missing, negative, NaN, and non-numeric inputs).
+  - Comprehensive check on order amounts (rejecting missing, negative, NaN, and non-numeric values).
 - **Accurate Financial Calculations**:
-  - Calculates discounts rounded to 2 decimal places (`cents`), preventing floating-point precision errors (e.g. `0.30000000000000004`).
+  - Rounds discounts and final amounts to 2 decimal places (`cents`), preventing floating-point precision inaccuracies (e.g. `0.30000000000000004`).
 - **Automated Test Suite**:
-  - 33 comprehensive unit and integration tests using **Jest** and **Supertest** covering every edge case and required error scenario.
-- **Production Hardening**:
-  - Secure HTTP headers via `helmet`.
-  - CORS enabled.
-  - Centralized operational error handling with appropriate HTTP status codes (200, 201, 400, 404, 409).
+  - 33 comprehensive unit and integration tests using **Jest** and **Supertest** covering 100% of the specified edge cases.
+- **Bonus Simple React UI**:
+  - Clean, unbloated, structured React page (black text on white background) to create coupons and list them in real-time.
 
 ---
 
@@ -34,12 +34,13 @@ A production-ready REST API built with **TypeScript**, **Node.js**, **Express**,
 - **Database / ODM**: MongoDB / Mongoose (with In-Memory repository fallback)
 - **Validation**: Zod
 - **Testing**: Jest, Supertest, ts-jest
+- **Frontend (Bonus)**: React 18, Vite
 
 ---
 
 ## 🚀 Installation & Getting Started
 
-### 1. Clone the repository & install dependencies
+### 1. Clone & Install Dependencies
 
 ```bash
 git clone <your-repo-url>
@@ -60,14 +61,14 @@ Default variables:
 PORT=5001
 NODE_ENV=development
 
-# Optional: Provide MongoDB connection string.
-# If omitted or unavailable, the server automatically defaults to In-Memory storage.
+# Optional: MongoDB connection string.
+# If omitted or offline, the server automatically defaults to In-Memory storage.
 # MONGODB_URI=mongodb://localhost:27017/coupon_db
 ```
 
-### 3. Run the API
+### 3. Run the API Server
 
-**Development Mode (with auto-reload):**
+**Development Mode (with auto-reload on port 5001):**
 ```bash
 npm run dev
 ```
@@ -78,7 +79,9 @@ npm run build
 npm start
 ```
 
-The server starts on `http://localhost:5001`.
+The server starts on **`http://localhost:5001`**.
+
+---
 
 ### 4. Run the Bonus React Page (Optional)
 
@@ -88,13 +91,14 @@ To start the simple React page that creates coupons and lists them:
 npm run client
 ```
 
-This starts the React frontend on `http://localhost:3000` and automatically proxies API requests to `http://localhost:5001`.
+Open your browser to **`http://localhost:3000`**.  
+*(Vite proxies API requests automatically to `http://localhost:5001`).*
 
 ---
 
 ## 🧪 Running Automated Tests
 
-Run the full integration and unit test suite (33 tests):
+Run the full integration and unit test suite (**33 tests passing**):
 
 ```bash
 npm test
@@ -110,13 +114,13 @@ npm run test:coverage
 ## 📡 API Endpoints Reference
 
 ### 1. Create Coupon
-Creates a coupon with a code, a discount percent from 1 to 90, and a future expiry date.
+Creates a coupon with a code, a discount percent from 1 to 90, and an expiry date.
 
 - **Method**: `POST`
 - **Path**: `/coupons`
 - **Headers**: `Content-Type: application/json`
 
-#### Request Body
+#### Request Body:
 ```json
 {
   "code": "SAVE20",
@@ -126,9 +130,9 @@ Creates a coupon with a code, a discount percent from 1 to 90, and a future expi
 ```
 
 #### Validation Rules:
-- `code`: String, required, 2–30 characters, alphanumeric with hyphens/underscores. Automatically converted to uppercase.
+- `code`: String, required, 2–30 chars, alphanumeric with hyphens/underscores. Automatically trimmed and converted to uppercase.
 - `discount`: Number, required, must be between **1 and 90** (inclusive).
-- `expiryDate`: ISO date string or valid date, required, must be in the future.
+- `expiryDate`: ISO date string or valid date, required, **must be in the future**.
 
 #### Success Response (`201 Created`):
 ```json
@@ -136,12 +140,12 @@ Creates a coupon with a code, a discount percent from 1 to 90, and a future expi
   "success": true,
   "message": "Coupon created successfully",
   "data": {
-    "id": "coupon_1_1792792062407",
+    "id": "6adcb5e5768a794d666f2c09",
     "code": "SAVE20",
     "discount": 20,
     "expiryDate": "2026-12-31T23:59:59.000Z",
-    "createdAt": "2026-10-24T03:00:00.000Z",
-    "updatedAt": "2026-10-24T03:00:00.000Z",
+    "createdAt": "2026-10-24T13:43:01.441Z",
+    "updatedAt": "2026-10-24T13:43:01.441Z",
     "isExpired": false
   }
 }
@@ -166,12 +170,12 @@ Lists all stored coupons.
   "count": 3,
   "data": [
     {
-      "id": "coupon_1_1792792062407",
+      "id": "6adcb5dc768a794d666f2c01",
       "code": "WELCOME20",
       "discount": 20,
-      "expiryDate": "2026-11-23T03:00:00.000Z",
-      "createdAt": "2026-10-24T03:00:00.000Z",
-      "updatedAt": "2026-10-24T03:00:00.000Z",
+      "expiryDate": "2026-11-23T13:42:52.718Z",
+      "createdAt": "2026-10-24T13:42:52.726Z",
+      "updatedAt": "2026-10-24T13:42:52.726Z",
       "isExpired": false
     }
   ]
@@ -187,7 +191,7 @@ Takes `{ code, amount }` and returns the final amount after applying the discoun
 - **Path**: `/coupons/apply`
 - **Headers**: `Content-Type: application/json`
 
-#### Request Body
+#### Request Body:
 ```json
 {
   "code": "WELCOME20",
@@ -208,24 +212,28 @@ Takes `{ code, amount }` and returns the final amount after applying the discoun
 }
 ```
 
-#### Required Error Cases Handled:
+---
 
-| Condition | HTTP Status | Error Message |
+## ⚠️ Required Error Handling Specifications (`POST /coupons/apply`)
+
+The endpoint strictly handles all required error conditions with clear, informative messages:
+
+| Test Condition | HTTP Status | Response Message |
 | :--- | :--- | :--- |
-| **Coupon code does not exist** | `404 Not Found` | `Coupon code '<CODE>' does not exist` |
-| **Coupon has expired** | `400 Bad Request` | `Coupon has expired` |
-| **Amount is missing** | `400 Bad Request` | `Amount is missing. Please provide an order amount.` |
-| **Amount is negative** | `400 Bad Request` | `Amount cannot be negative. Please provide a positive order amount.` |
-| **Amount is not a number** | `400 Bad Request` | `Amount is not a number. Please provide a valid numeric value.` |
-| **Code is missing** | `400 Bad Request` | `Coupon code is required` |
+| **The coupon code does not exist** | `404 Not Found` | `"Coupon code '<CODE>' does not exist"` |
+| **The coupon has expired** | `400 Bad Request` | `"Coupon has expired"` |
+| **The amount is missing** | `400 Bad Request` | `"Amount is missing. Please provide an order amount."` |
+| **The amount is negative** | `400 Bad Request` | `"Amount cannot be negative. Please provide a positive order amount."` |
+| **The amount is not a number** | `400 Bad Request` | `"Amount is not a number. Please provide a valid numeric value."` |
+| **The coupon code is missing** | `400 Bad Request` | `"Coupon code is required"` |
 
 ---
 
-## 🧪 Quick Test Guide with cURL
+## 💻 Quick Test Commands (cURL)
 
-Make sure the server is running (`npm run dev`), then run these commands in your terminal:
+Make sure the server is running (`npm run dev`), then execute these commands in your terminal:
 
-### 1. Create a Coupon (Valid)
+### 1. Create a Valid Coupon
 ```bash
 curl -X POST http://localhost:5001/coupons \
   -H "Content-Type: application/json" \
@@ -237,53 +245,56 @@ curl -X POST http://localhost:5001/coupons \
 curl http://localhost:5001/coupons
 ```
 
-### 3. Apply Coupon (Success)
+### 3. Apply Coupon (Success - $100 with 20% discount = $80)
 ```bash
 curl -X POST http://localhost:5001/coupons/apply \
   -H "Content-Type: application/json" \
   -d '{"code": "WELCOME20", "amount": 100}'
 ```
-*Expected: `finalAmount: 80`*
 
-### 4. Non-Existent Coupon (404 Error)
+### 4. Test: Non-Existent Coupon (404 Not Found)
 ```bash
 curl -X POST http://localhost:5001/coupons/apply \
   -H "Content-Type: application/json" \
-  -d '{"code": "DOES_NOT_EXIST", "amount": 100}'
+  -d '{"code": "NON_EXISTENT_COUPON", "amount": 100}'
 ```
-*Expected 404: `Coupon code 'DOES_NOT_EXIST' does not exist`*
 
-### 5. Expired Coupon (400 Error)
+### 5. Test: Expired Coupon (400 Bad Request)
 ```bash
 curl -X POST http://localhost:5001/coupons/apply \
   -H "Content-Type: application/json" \
   -d '{"code": "EXPIRED10", "amount": 100}'
 ```
-*Expected 400: `Coupon has expired`*
 
-### 6. Missing Amount (400 Error)
+### 6. Test: Missing Amount (400 Bad Request)
 ```bash
 curl -X POST http://localhost:5001/coupons/apply \
   -H "Content-Type: application/json" \
   -d '{"code": "WELCOME20"}'
 ```
-*Expected 400: `Amount is missing. Please provide an order amount.`*
 
-### 7. Negative Amount (400 Error)
+### 7. Test: Negative Amount (400 Bad Request)
 ```bash
 curl -X POST http://localhost:5001/coupons/apply \
   -H "Content-Type: application/json" \
   -d '{"code": "WELCOME20", "amount": -50}'
 ```
-*Expected 400: `Amount cannot be negative. Please provide a positive order amount.`*
 
-### 8. Amount Not a Number (400 Error)
+### 8. Test: Amount Not a Number (400 Bad Request)
 ```bash
 curl -X POST http://localhost:5001/coupons/apply \
   -H "Content-Type: application/json" \
   -d '{"code": "WELCOME20", "amount": "abc"}'
 ```
-*Expected 400: `Amount is not a number. Please provide a valid numeric value.`*
+
+---
+
+## 💡 Notes on Design Decisions
+
+1. **Storage Choice**: Implemented using the **Repository Pattern** (`ICouponRepository`). It connects to **MongoDB** if `MONGODB_URI` is present in `.env`, and gracefully defaults to an in-memory repository if not provided. This ensures that any reviewer can clone and test the repository without needing a running database instance.
+2. **Financial Precision**: Floating point values in discounts are rounded using `Math.round(val * 100) / 100` to prevent IEEE 754 precision issues (e.g. `$84.99000000000001`).
+3. **Case-Insensitive Coupon Codes**: Codes are normalized to uppercase (`save20` -> `SAVE20`) and trimmed of whitespace, aligning with standard e-commerce best practices.
+4. **Part 2 Answers**: All bugs in the Part 2 route are fully documented with root causes, failure modes, and corrected code in [ANSWERS.md](./ANSWERS.md).
 
 ---
 
@@ -297,7 +308,7 @@ cashflowcrew/
 │   ├── controllers/
 │   │   └── coupon.controller.ts     # HTTP request handlers
 │   ├── middlewares/
-│   │   ├── errorHandler.ts          # Centralized error handler
+│   │   ├── errorHandler.ts          # Centralized error handling
 │   │   └── validate.ts              # Zod validation middleware
 │   ├── models/
 │   │   └── coupon.model.ts          # Mongoose Schema & Document definition
@@ -308,19 +319,26 @@ cashflowcrew/
 │   ├── routes/
 │   │   └── coupon.routes.ts         # /coupons routing
 │   ├── schemas/
-│   │   └── coupon.schema.ts         # Zod schemas & granular input checkers
+│   │   └── coupon.schema.ts         # Zod schemas & input checkers
 │   ├── services/
 │   │   └── coupon.service.ts        # Business logic & discount computation
 │   ├── types/
 │   │   ├── coupon.types.ts          # TypeScript interfaces & DTOs
-│   │   └── errors.ts                # Custom AppError subclasses
+│   │   └── errors.ts                # Operational AppError classes
 │   ├── app.ts                       # Express application assembly
 │   └── server.ts                    # Server bootstrap & graceful shutdown
+├── client/                          # Bonus Simple React UI (black on white)
+│   ├── src/
+│   │   ├── App.tsx                  # Coupon form & live coupons table
+│   │   ├── index.css                # Plain, clean styling
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
 ├── tests/
 │   ├── couponService.test.ts        # Service unit tests
 │   └── coupons.test.ts              # Supertest integration tests (33 cases)
-├── jest.config.ts                   # Jest testing configuration
-├── tsconfig.json                    # TypeScript compiler options
+├── ANSWERS.md                       # Part 2 Bug Analysis & Code Review
+├── README.md                        # Project Documentation
 ├── package.json
-└── README.md
+└── tsconfig.json
 ```
