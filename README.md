@@ -80,6 +80,16 @@ npm start
 
 The server starts on `http://localhost:5001`.
 
+### 4. Run the Bonus React Page (Optional)
+
+To start the simple React page that creates coupons and lists them:
+
+```bash
+npm run client
+```
+
+This starts the React frontend on `http://localhost:3000` and automatically proxies API requests to `http://localhost:5001`.
+
 ---
 
 ## 🧪 Running Automated Tests
